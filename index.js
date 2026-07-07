@@ -132,36 +132,40 @@ function createServer() {
     async ({ cuisine }) => {
       const seed = weekSeed() + (cuisine ? cuisine.length : 0);
       const days = ['월', '화', '수', '목', '금', '토', '일'];
+      const SATURDAY = 5;
+      const simpleDays = [0, 1, 2, 3, 4, 6]; // 토요일 제외 6일 = 간단한 메뉴, 토요일 = 특별한 날 메뉴
 
       const breakfastPool = cuisine ? filterPool(cuisine, '평소') : ILPUM_POOL;
       const breakfastSource = breakfastPool.length >= 7 ? breakfastPool : [...breakfastPool, ...breakfastPool, ...breakfastPool];
       const breakfast = seededPickMany(breakfastSource, seed + 1, 7);
 
-      let dinner, dinnerSides;
+      const dinner = new Array(7);
+      const dinnerSides = new Array(7).fill(null);
+
+      const specialPool = filterPool(cuisine, '특별한날');
+      dinner[SATURDAY] = specialPool.length ? seededPick(specialPool, seed + 6) : seededPick(ILPUM_POOL, seed + 6);
+
       if (cuisine) {
         const dinnerPool = filterPool(cuisine, '평소');
-        const dinnerSource = dinnerPool.length >= 7 ? dinnerPool : [...dinnerPool, ...dinnerPool, ...dinnerPool];
-        dinner = seededPickMany(dinnerSource, seed + 2, 7);
-        dinnerSides = dinner.map(() => null);
+        const dinnerSource = dinnerPool.length >= 6 ? dinnerPool : [...dinnerPool, ...dinnerPool, ...dinnerPool];
+        const picks = seededPickMany(dinnerSource, seed + 2, 6);
+        simpleDays.forEach((day, k) => { dinner[day] = picks[k]; });
       } else {
-        const setDayIndexes = new Set(seededPickMany([0, 1, 2, 3, 4, 5, 6], seed + 3, HANSIK_SET_POOL.length).map(Number));
-        const setPicks = seededPickMany(HANSIK_SET_POOL, seed + 4, setDayIndexes.size);
-        const ilpumPicks = seededPickMany(ILPUM_POOL, seed + 5, 7 - setDayIndexes.size);
+        const setCount = Math.min(HANSIK_SET_POOL.length, simpleDays.length);
+        const setDays = new Set(seededPickMany(simpleDays, seed + 3, setCount));
+        const setPicks = seededPickMany(HANSIK_SET_POOL, seed + 4, setCount);
+        const ilpumPicks = seededPickMany(ILPUM_POOL, seed + 5, simpleDays.length - setCount);
 
-        dinner = [];
-        dinnerSides = [];
         let setIdx = 0, ilpumIdx = 0;
-        for (let i = 0; i < 7; i++) {
-          if (setDayIndexes.has(i)) {
-            const main = setPicks[setIdx++];
-            dinner.push(main);
-            const sideSeed = (seed + 1) * (i * 7 + 13) + 4001;
-            dinnerSides.push(seededPickMany(SIDES, sideSeed, 1));
+        simpleDays.forEach(day => {
+          if (setDays.has(day)) {
+            dinner[day] = setPicks[setIdx++];
+            const sideSeed = (seed + 1) * (day * 7 + 13) + 4001;
+            dinnerSides[day] = seededPickMany(SIDES, sideSeed, 1);
           } else {
-            dinner.push(ilpumPicks[ilpumIdx++]);
-            dinnerSides.push(null);
+            dinner[day] = ilpumPicks[ilpumIdx++];
           }
-        }
+        });
       }
 
       const lines = [`📅 이번 주 식단 추천${cuisine ? ` (${cuisine})` : ''}`, '', '[아침]'];
