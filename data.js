@@ -328,17 +328,22 @@ export const SIDES = [
   }
 ];
 
+// 서버가 어떤 시간대(UTC 등)에서 돌아가든 항상 한국시간(KST, UTC+9) 기준 날짜로 계산
+function nowKST(){
+  return new Date(Date.now() + 9*60*60*1000);
+}
+
 export function todaySeed(){
-  const d = new Date();
-  return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+  const d = nowKST();
+  return d.getUTCFullYear()*10000 + (d.getUTCMonth()+1)*100 + d.getUTCDate();
 }
 
 export function weekSeed(){
-  const d = new Date();
-  const day = d.getDay() === 0 ? 7 : d.getDay(); // 월=1 ... 일=7
+  const d = nowKST();
+  const day = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // 월=1 ... 일=7
   const monday = new Date(d);
-  monday.setDate(d.getDate() - (day - 1));
-  return monday.getFullYear()*10000 + (monday.getMonth()+1)*100 + monday.getDate();
+  monday.setUTCDate(d.getUTCDate() - (day - 1));
+  return monday.getUTCFullYear()*10000 + (monday.getUTCMonth()+1)*100 + monday.getUTCDate();
 }
 
 export function seededPick(arr, seed){
