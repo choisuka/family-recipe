@@ -71,7 +71,13 @@ function createServer() {
       if (ingredients && ingredients.length) {
         const scored = pool.map(r => ({ r, score: matchScore(r.ingredients, ingredients) }));
         scored.sort((a, b) => b.score - a.score);
-        recipe = scored[0].r;
+        const fullyCoverable = scored.filter(s => s.score === 1);
+        if (fullyCoverable.length) {
+          fullyCoverable.sort((a, b) => b.r.ingredients.length - a.r.ingredients.length);
+          recipe = fullyCoverable[0].r;
+        } else {
+          recipe = scored[0].r;
+        }
       } else {
         const seed = todaySeed() + (cuisine ? cuisine.length : 0) + occ.length;
         recipe = seededPick(pool, seed);
@@ -133,9 +139,10 @@ function createServer() {
     'weekly_menu',
     {
       title: '일주일 식단 추천',
-      description: 'Happy Family Operation(행복한 가정만들기 작전)의 일주일 식단 추천 도구입니다. 아침 7끼, 저녁 7끼를 겹치지 않게 추천합니다. 아침과 특정 요리 종류 지정 시 저녁은 반찬 없는 한그릇 메뉴 위주로, 요리 종류를 지정하지 않으면 저녁 중 3일은 한식 찌개/메인과 반찬 세트로, 나머지는 중식·양식·한식 한그릇 메뉴로 다양하게 구성합니다. 이번 주(월~일) 동안은 같은 결과가 유지됩니다.',
+      description: 'Happy Family Operation(행복한 가정만들기 작전)의 일주일 식단 추천 도구입니다. 아침 7끼, 저녁 7끼를 겹치지 않게 추천합니다. 요리 종류를 지정하지 않으면 저녁 중 토요일은 특별한 날 메뉴, 3일은 한식 찌개/메인과 반찬 세트, 나머지 3일은 중식·양식·한식 한그릇 메뉴로 구성합니다. 지금 있는 재료를 알려주면 일주일치 메뉴 전체에 필요한 재료를 합산해 이미 있는 재료와 구입할 재료를 계산해줍니다. 이번 주(월~일) 동안은 같은 결과가 유지됩니다.',
       inputSchema: {
-        cuisine: z.enum(['한식', '양식', '중식']).optional().describe('원하는 요리 종류 (선택, 없으면 여러 종류를 섞어서 추천)')
+        cuisine: z.enum(['한식', '양식', '중식']).optional().describe('원하는 요리 종류 (선택, 없으면 여러 종류를 섞어서 추천)'),
+        ingredients: z.array(z.string()).optional().describe('지금 집에 있는 재료 목록 (선택, 입력하면 일주일치 메뉴 전체의 구입할 재료를 계산해줍니다)')
       },
       annotations: {
         title: '일주일 식단 추천',
@@ -145,7 +152,7 @@ function createServer() {
         openWorldHint: false
       }
     },
-    async ({ cuisine }) => {
+    async ({ cuisine, ingredients }) => {
       const seed = weekSeed() + (cuisine ? cuisine.length : 0);
       const days = ['월', '화', '수', '목', '금', '토', '일'];
       const SATURDAY = 5;
@@ -191,6 +198,21 @@ function createServer() {
         const sideText = dinnerSides[i] && dinnerSides[i].length ? ` + 반찬: ${dinnerSides[i].map(s => s.name).join(', ')}` : '';
         lines.push(`${days[i]}요일: ${r.name} (${r.cuisine}${r.occasion === '특별한날' ? ' · 특별한 날 메뉴' : ''})${sideText}`);
       });
+      if (ingredients && ingredients.length) {
+        const ingredientMap = new Map();
+        [...breakfast, ...dinner].forEach(r => r.ingredients.forEach(i => ingredientMap.set(i.name, i)));
+        dinnerSides.filter(Boolean).flat().forEach(s => s.ingredients.forEach(i => ingredientMap.set(i.name, i)));
+        const weekIngredients = [...ingredientMap.values()];
+        const { already, toBuy } = diffIngredients(weekIngredients, ingredients);
+        const link = marketLink(toBuy);
+
+        lines.push('', '[일주일 장보기]');
+        lines.push(already.length ? `✅ 이미 있는 재료: ${already.map(i => i.name).join(', ')}` : '✅ 이미 있는 재료: 없음');
+        lines.push(toBuy.length ? `🛒 구입할 재료: ${toBuy.map(i => i.name).join(', ')}` : '🛒 구입할 재료: 없음 (지금 있는 재료로 이번 주 식단이 모두 가능해요!)');
+        lines.push('(같은 재료가 여러 요리에 쓰일 수 있어 정확한 필요 분량은 그날 메뉴를 recommend_recipe로 다시 확인해주세요.)');
+        if (link) lines.push(`🛍️ 장보기: ${link}`);
+      }
+
       lines.push('', '💡 재료가 남았다면 recommend_recipe로 오늘 뭐 먹을지 바로 물어보세요.');
 
       return { content: [{ type: 'text', text: lines.join('\n') }] };
