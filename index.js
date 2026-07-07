@@ -28,16 +28,21 @@ function matchScore(ingredients, have) {
   return matched.length / ingredients.length;
 }
 
+const STAPLES = new Set(['물']); // 장보기 목록에 넣을 필요 없는 재료
+
 function diffIngredients(ingredients, have) {
   const haveSet = new Set((have || []).map(s => s.trim()));
-  const already = ingredients.filter(i => haveSet.has(i.name));
-  const toBuy = ingredients.filter(i => !haveSet.has(i.name));
+  const already = ingredients.filter(i => haveSet.has(i.name) || STAPLES.has(i.name));
+  const toBuy = ingredients.filter(i => !haveSet.has(i.name) && !STAPLES.has(i.name));
   return { already, toBuy };
 }
 
-function marketLink(toBuy) {
-  if (!toBuy.length) return null;
-  return `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(toBuy.map(i => i.name).join(' '))}`;
+function marketSearchUrl(query) {
+  return `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(query)}`;
+}
+
+function marketLinks(toBuy) {
+  return toBuy.map(i => `${i.name}: ${marketSearchUrl(i.name)}`);
 }
 
 function createServer() {
@@ -121,8 +126,10 @@ function createServer() {
         lines.push(`🧾 필요한 재료: ${allIngredients.map(i => `${i.name} ${i.amount}`).join(', ')}`);
       }
 
-      const link = marketLink(toBuy.length ? toBuy : (ingredients ? [] : allIngredients));
-      if (link) lines.push(`🛍️ 장보기: ${link}`);
+      const toBuyForLinks = toBuy.length ? toBuy : (ingredients ? [] : allIngredients);
+      if (toBuyForLinks.length) {
+        lines.push('🛍️ 장보기 링크:', ...marketLinks(toBuyForLinks).map(l => `  ${l}`));
+      }
 
       const withSubstitute = allIngredients.filter(i => i.substitute);
       if (withSubstitute.length) {
@@ -204,13 +211,14 @@ function createServer() {
         dinnerSides.filter(Boolean).flat().forEach(s => s.ingredients.forEach(i => ingredientMap.set(i.name, i)));
         const weekIngredients = [...ingredientMap.values()];
         const { already, toBuy } = diffIngredients(weekIngredients, ingredients);
-        const link = marketLink(toBuy);
 
         lines.push('', '[일주일 장보기]');
         lines.push(already.length ? `✅ 이미 있는 재료: ${already.map(i => i.name).join(', ')}` : '✅ 이미 있는 재료: 없음');
         lines.push(toBuy.length ? `🛒 구입할 재료: ${toBuy.map(i => i.name).join(', ')}` : '🛒 구입할 재료: 없음 (지금 있는 재료로 이번 주 식단이 모두 가능해요!)');
         lines.push('(같은 재료가 여러 요리에 쓰일 수 있어 정확한 필요 분량은 그날 메뉴를 recommend_recipe로 다시 확인해주세요.)');
-        if (link) lines.push(`🛍️ 장보기: ${link}`);
+        if (toBuy.length) {
+          lines.push('🛍️ 장보기 링크:', ...marketLinks(toBuy).map(l => `  ${l}`));
+        }
       }
 
       lines.push('', '💡 재료가 남았다면 recommend_recipe로 오늘 뭐 먹을지 바로 물어보세요.');
