@@ -15,28 +15,29 @@ function filterPool(cuisine, occasion) {
 }
 
 function combinedIngredients(recipe, sides) {
-  const set = new Set(recipe.ingredients);
-  (sides || []).forEach(s => s.ingredients.forEach(i => set.add(i)));
-  return [...set];
+  const map = new Map();
+  recipe.ingredients.forEach(i => map.set(i.name, i));
+  (sides || []).forEach(s => s.ingredients.forEach(i => map.set(i.name, i)));
+  return [...map.values()];
 }
 
 function matchScore(ingredients, have) {
   if (!have || !have.length) return 0;
   const haveSet = new Set(have.map(s => s.trim()));
-  const matched = ingredients.filter(i => haveSet.has(i));
+  const matched = ingredients.filter(i => haveSet.has(i.name));
   return matched.length / ingredients.length;
 }
 
 function diffIngredients(ingredients, have) {
   const haveSet = new Set((have || []).map(s => s.trim()));
-  const already = ingredients.filter(i => haveSet.has(i));
-  const toBuy = ingredients.filter(i => !haveSet.has(i));
+  const already = ingredients.filter(i => haveSet.has(i.name));
+  const toBuy = ingredients.filter(i => !haveSet.has(i.name));
   return { already, toBuy };
 }
 
 function marketLink(toBuy) {
   if (!toBuy.length) return null;
-  return `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(toBuy.join(' '))}`;
+  return `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(toBuy.map(i => i.name).join(' '))}`;
 }
 
 function createServer() {
@@ -46,7 +47,7 @@ function createServer() {
     'recommend_recipe',
     {
       title: '남은 재료 레시피 추천',
-      description: 'Happy Family Operation(행복한 가정만들기 작전)의 레시피 추천 도구입니다. 지금 집에 있는 재료를 알려주면 그 재료를 가장 많이 활용할 수 있는 메뉴 하나를 정해주고, 한식 찌개류는 어울리는 반찬 1~2개도 함께 추천합니다. 이미 있는 재료와 추가로 구입해야 할 재료를 계산하고, 구입할 재료가 있으면 장보기 검색 링크도 안내합니다.',
+      description: 'Happy Family Operation(행복한 가정만들기 작전)의 레시피 추천 도구입니다. 지금 집에 있는 재료를 알려주면 그 재료를 가장 많이 활용할 수 있는 메뉴 하나를 정해주고, 정확한 분량·조리시간·번호별 조리 순서를 안내합니다. 양념은 간장·소금·마늘·참기름 등 보편적인 재료 위주로 구성했고, 양식은 핵심 재료와 구매 가능한 브랜드도 함께 추천합니다. 한식 찌개류는 어울리는 반찬 1~2개도 함께 추천합니다. 이미 있는 재료와 추가로 구입해야 할 재료(정확한 분량 포함)를 계산하고, 구입할 재료가 있으면 장보기 검색 링크도 안내합니다.',
       inputSchema: {
         ingredients: z.array(z.string()).optional().describe('지금 집에 있는 재료 목록 (선택, 없으면 오늘의 추천 메뉴로 안내)'),
         cuisine: z.enum(['한식', '양식', '중식']).optional().describe('원하는 요리 종류 (선택)'),
@@ -87,21 +88,31 @@ function createServer() {
 
       const lines = [
         `🍳 추천 메뉴: ${recipe.name} (${recipe.cuisine} · ${recipe.occasion})`,
-        `📋 조리법: ${recipe.steps}`,
+        `⏱️ 조리시간: ${recipe.time}`,
+        `📋 조리 순서:`,
+        ...recipe.steps.map(s => `  ${s}`),
         `💡 팁: ${recipe.tip}`
       ];
 
+      if (recipe.brands && recipe.brands.length) {
+        lines.push(`🏷️ 추천 브랜드: ${recipe.brands.map(b => `${b.item}(${b.options.join('/')})`).join(', ')}`);
+      }
+
       sides.forEach(s => {
-        lines.push(`🥗 반찬: ${s.name} — ${s.steps} (팁: ${s.tip})`);
+        lines.push(
+          `🥗 반찬: ${s.name} (${s.time})`,
+          ...s.steps.map(st => `  ${st}`),
+          `  팁: ${s.tip}`
+        );
       });
 
       if (ingredients && ingredients.length) {
         lines.push(
-          already.length ? `✅ 이미 있는 재료: ${already.join(', ')}` : '✅ 이미 있는 재료: 없음',
-          toBuy.length ? `🛒 추가로 구입할 재료: ${toBuy.join(', ')}` : '🛒 추가로 구입할 재료: 없음 (지금 있는 재료로 바로 가능해요!)'
+          already.length ? `✅ 이미 있는 재료: ${already.map(i => i.name).join(', ')}` : '✅ 이미 있는 재료: 없음',
+          toBuy.length ? `🛒 추가로 구입할 재료: ${toBuy.map(i => `${i.name} ${i.amount}`).join(', ')}` : '🛒 추가로 구입할 재료: 없음 (지금 있는 재료로 바로 가능해요!)'
         );
       } else {
-        lines.push(`🧾 필요한 재료: ${allIngredients.join(', ')}`);
+        lines.push(`🧾 필요한 재료: ${allIngredients.map(i => `${i.name} ${i.amount}`).join(', ')}`);
       }
 
       const link = marketLink(toBuy.length ? toBuy : (ingredients ? [] : allIngredients));
