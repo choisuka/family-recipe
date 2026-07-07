@@ -109,7 +109,7 @@ export const RECIPES = [
   },
   {
     cuisine:'양식', occasion:'평소', name:'크림파스타', time:'20분',
-    ingredients:[{name:'파스타면',amount:'200g'},{name:'생크림',amount:'200ml'},{name:'베이컨',amount:'80g'},{name:'다진마늘',amount:'1작은술'},{name:'파마산치즈',amount:'2큰술'},{name:'소금',amount:'약간'},{name:'후추',amount:'약간'}],
+    ingredients:[{name:'파스타면',amount:'200g'},{name:'생크림',amount:'200ml',substitute:'생크림이 없으면 우유 200ml + 버터 20g으로 대체 가능'},{name:'베이컨',amount:'80g'},{name:'다진마늘',amount:'1작은술'},{name:'파마산치즈',amount:'2큰술',substitute:'파마산치즈가 없으면 체다치즈나 슬라이스치즈로 대체 가능'},{name:'소금',amount:'약간'},{name:'후추',amount:'약간'}],
     brands:[{item:'생크림', options:['서울우유','매일유업','엘르앤비르']},{item:'파마산치즈', options:['명작치즈','크래프트','대상']}],
     steps:[
       '1. 끓는 물에 파스타면을 삶는다 (10분)',
@@ -145,7 +145,7 @@ export const RECIPES = [
   },
   {
     cuisine:'양식', occasion:'평소', name:'시저샐러드', time:'15분',
-    ingredients:[{name:'양상추',amount:'1/2통'},{name:'닭가슴살',amount:'1쪽'},{name:'마요네즈',amount:'3큰술'},{name:'파마산치즈',amount:'2큰술'},{name:'레몬즙',amount:'1작은술'},{name:'다진마늘',amount:'약간'},{name:'후추',amount:'약간'}],
+    ingredients:[{name:'양상추',amount:'1/2통'},{name:'닭가슴살',amount:'1쪽'},{name:'마요네즈',amount:'3큰술'},{name:'파마산치즈',amount:'2큰술',substitute:'파마산치즈가 없으면 체다치즈나 슬라이스치즈로 대체 가능'},{name:'레몬즙',amount:'1작은술',substitute:'레몬즙이 없으면 식초로 대체 가능'},{name:'다진마늘',amount:'약간'},{name:'후추',amount:'약간'}],
     brands:[{item:'마요네즈', options:['오뚜기','CJ 큐원','베스트푸드']}],
     steps:[
       '1. 닭가슴살을 소금·후추로 밑간해 팬에 굽는다 (8분)',
@@ -171,7 +171,7 @@ export const RECIPES = [
   },
   {
     cuisine:'양식', occasion:'특별한날', name:'라자냐', time:'70분',
-    ingredients:[{name:'라자냐면',amount:'9장'},{name:'토마토소스',amount:'400g'},{name:'다진고기',amount:'300g'},{name:'생크림',amount:'200ml'},{name:'모짜렐라치즈',amount:'200g'},{name:'양파',amount:'1/2개'},{name:'다진마늘',amount:'1작은술'}],
+    ingredients:[{name:'라자냐면',amount:'9장'},{name:'토마토소스',amount:'400g'},{name:'다진고기',amount:'300g'},{name:'생크림',amount:'200ml',substitute:'생크림이 없으면 우유 200ml + 버터 20g으로 대체 가능'},{name:'모짜렐라치즈',amount:'200g',substitute:'모짜렐라치즈가 없으면 슬라이스치즈나 체다치즈로 대체 가능'},{name:'양파',amount:'1/2개'},{name:'다진마늘',amount:'1작은술'}],
     brands:[{item:'토마토소스', options:['오뚜기','청정원','하인즈']},{item:'모짜렐라치즈', options:['서울우유','대상','전주비빔치즈']}],
     steps:[
       '1. 라자냐면을 끓는 물에 삶는다 (10분)',
@@ -187,7 +187,7 @@ export const RECIPES = [
   // 중식
   {
     cuisine:'중식', occasion:'평소', name:'마파두부', time:'15분',
-    ingredients:[{name:'두부',amount:'300g'},{name:'다진고기',amount:'100g'},{name:'두반장',amount:'1큰술'},{name:'대파',amount:'1/4대'},{name:'다진마늘',amount:'1작은술'},{name:'전분',amount:'1작은술 (물 2큰술과 섞어 전분물로 사용)'},{name:'물',amount:'1/2컵(100ml)'}],
+    ingredients:[{name:'두부',amount:'300g'},{name:'다진고기',amount:'100g'},{name:'두반장',amount:'1큰술',substitute:'두반장이 없으면 고추장 1큰술 + 다진마늘 약간으로 대체 가능(맛은 다소 달라짐)'},{name:'대파',amount:'1/4대'},{name:'다진마늘',amount:'1작은술'},{name:'전분',amount:'1작은술 (물 2큰술과 섞어 전분물로 사용)'},{name:'물',amount:'1/2컵(100ml)'}],
     steps:[
       '1. 두부를 깍둑썰어 끓는 물에 살짝 데친다 (3분)',
       '2. 팬에 다진고기와 다진마늘을 볶는다 (3분)',

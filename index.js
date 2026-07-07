@@ -47,7 +47,7 @@ function createServer() {
     'recommend_recipe',
     {
       title: '남은 재료 레시피 추천',
-      description: 'Happy Family Operation(행복한 가정만들기 작전)의 레시피 추천 도구입니다. 지금 집에 있는 재료를 알려주면 그 재료를 가장 많이 활용할 수 있는 메뉴 하나를 정해주고, 정확한 분량·조리시간·번호별 조리 순서를 안내합니다. 양념은 간장·소금·마늘·참기름 등 보편적인 재료 위주로 구성했고, 양식은 핵심 재료와 구매 가능한 브랜드도 함께 추천합니다. 한식 찌개류는 어울리는 반찬 1~2개도 함께 추천합니다. 이미 있는 재료와 추가로 구입해야 할 재료(정확한 분량 포함)를 계산하고, 구입할 재료가 있으면 장보기 검색 링크도 안내합니다.',
+      description: 'Happy Family Operation(행복한 가정만들기 작전)의 레시피 추천 도구입니다. 지금 집에 있는 재료를 알려주면 그 재료를 가장 많이 활용할 수 있는 메뉴 하나를 정해주고, 정확한 분량·조리시간·번호별 조리 순서를 안내합니다. 양념은 간장·소금·마늘·참기름 등 보편적인 재료 위주로 구성했고, 양식은 핵심 재료와 구매 가능한 브랜드도 함께 추천합니다. 두반장·파마산치즈처럼 구하기 어려운 재료는 대체 방법도 안내합니다. 한식 찌개류는 어울리는 반찬 1~2개도 함께 추천합니다. 이미 있는 재료와 추가로 구입해야 할 재료(정확한 분량 포함)를 계산하고, 구입할 재료가 있으면 장보기 검색 링크도 안내합니다.',
       inputSchema: {
         ingredients: z.array(z.string()).optional().describe('지금 집에 있는 재료 목록 (선택, 없으면 오늘의 추천 메뉴로 안내)'),
         cuisine: z.enum(['한식', '양식', '중식']).optional().describe('원하는 요리 종류 (선택)'),
@@ -117,6 +117,11 @@ function createServer() {
 
       const link = marketLink(toBuy.length ? toBuy : (ingredients ? [] : allIngredients));
       if (link) lines.push(`🛍️ 장보기: ${link}`);
+
+      const withSubstitute = allIngredients.filter(i => i.substitute);
+      if (withSubstitute.length) {
+        lines.push(`🔁 구하기 어려운 재료 대체법: ${withSubstitute.map(i => `${i.name} — ${i.substitute}`).join(' / ')}`);
+      }
 
       lines.push('💡 이번 주 식단이 궁금하면 일주일 메뉴도 물어보세요.');
 
